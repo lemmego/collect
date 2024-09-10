@@ -1,5 +1,159 @@
 package collect
 
+import "errors"
+
+type SliceCollection[T any] struct {
+	originalItems []T
+	items         []T
+}
+
+type MapCollection[K comparable, V any] struct {
+	originalItems map[K]V
+	items         map[K]V
+}
+
+func NewSlice[T any](xs []T) *SliceCollection[T] {
+	return &SliceCollection[T]{originalItems: xs, items: xs}
+}
+
+func NewMap[K comparable, V any](xs map[K]V) *MapCollection[K, V] {
+	return &MapCollection[K, V]{originalItems: xs, items: xs}
+}
+
+func (sc *SliceCollection[T]) Get() []T {
+	return sc.Items()
+}
+
+func (sc *SliceCollection[T]) All() []T {
+	return sc.originalItems
+}
+
+func (sc *SliceCollection[T]) Items() []T {
+	if sc.items == nil {
+		sc.items = make([]T, len(sc.originalItems))
+		copy(sc.items, sc.originalItems)
+	}
+	return sc.items
+}
+
+func (mc *MapCollection[K, V]) Items() map[K]V {
+	if mc.items == nil {
+		mc.items = make(map[K]V, len(mc.originalItems))
+		for k, v := range mc.originalItems {
+			mc.items[k] = v
+		}
+	}
+	return mc.items
+}
+
+func (mc *MapCollection[K, V]) Get() map[K]V {
+	return mc.Items()
+}
+
+func (mc *MapCollection[K, V]) All() map[K]V {
+	return mc.originalItems
+}
+
+func (sc *SliceCollection[T]) Len() int {
+	return len(sc.Items())
+}
+
+func (mc *MapCollection[K, V]) Len() int {
+	return len(mc.Items())
+}
+
+func (sc *SliceCollection[T]) At(i int) T {
+	return sc.Items()[i]
+}
+
+func (mc *MapCollection[K, V]) At(i K) V {
+	return mc.Items()[i]
+}
+
+func (mc *MapCollection[K, V]) Keys() *SliceCollection[K] {
+	keys := make([]K, 0, len(mc.originalItems))
+	for k := range mc.originalItems {
+		keys = append(keys, k)
+	}
+
+	return NewSlice(keys)
+}
+
+func (mc *MapCollection[K, V]) Values() *SliceCollection[V] {
+	values := make([]V, 0, len(mc.originalItems))
+	for _, v := range mc.originalItems {
+		values = append(values, v)
+	}
+
+	return NewSlice(values)
+}
+
+func (sc *SliceCollection[T]) Each(f func(T, int)) *SliceCollection[T] {
+	Each(sc.Items(), f)
+	return sc
+}
+
+func (mc *MapCollection[K, V]) Each(f func(V, K)) *MapCollection[K, V] {
+	for k, v := range mc.originalItems {
+		f(v, k)
+	}
+	return mc
+}
+
+func (sc *SliceCollection[T]) Filter(f func(T, int) bool) *SliceCollection[T] {
+	sc.items = Filter(sc.Items(), f)
+	return sc
+}
+
+func (mc *MapCollection[K, V]) Filter(f func(V, K) bool) *MapCollection[K, V] {
+	mc.items = make(map[K]V, len(mc.originalItems))
+	for k, v := range mc.originalItems {
+		if f(v, k) {
+			mc.items[k] = v
+		}
+	}
+	return mc
+}
+
+func (sc *SliceCollection[T]) Map(f func(T, int) T) *SliceCollection[T] {
+	sc.items = Map(sc.Items(), f)
+	return sc
+}
+
+func (mc *MapCollection[K, V]) Map(f func(V, K) V) *MapCollection[K, V] {
+	mc.items = make(map[K]V, len(mc.originalItems))
+	for k, v := range mc.originalItems {
+		mc.items[k] = f(v, k)
+	}
+	return mc
+}
+
+func (sc *SliceCollection[T]) Find(f func(T) bool) (T, error) {
+	val, found := Find(sc.Items(), f)
+	if found {
+		return val, nil
+	}
+
+	var zero T
+	return zero, errors.New("not found")
+}
+
+func (mc *MapCollection[K, V]) Find(f func(V) bool) (V, error) {
+	for _, v := range mc.originalItems {
+		if f(v) {
+			return v, nil
+		}
+	}
+	var zero V
+	return zero, errors.New("not found")
+}
+
+func (sc *SliceCollection[T]) Reduce(f func(T, T) T, zero T) T {
+	return Reduce(sc.Items(), f, zero)
+}
+
+// ================== Base Functions ==================
+
 func Each[T any](xs []T, f func(T, int)) {
 	for i, x := range xs {
 		f(x, i)
@@ -22,6 +176,13 @@ func Filter[T any](xs []T, f func(T, int) bool) []T {
 		}
 	}
 	return ys
+}
+
+func Reduce[T any](xs []T, f func(T, T) T, zero T) T {
+	for _, x := range xs {
+		zero = f(zero, x)
+	}
+	return zero
 }
 
 func Find[T any](xs []T, f func(T) bool) (T, bool) {
