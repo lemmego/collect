@@ -71,8 +71,8 @@ func (mc *MapCollection[K, V]) At(i K) V {
 }
 
 func (mc *MapCollection[K, V]) Keys() *SliceCollection[K] {
-	keys := make([]K, 0, len(mc.originalItems))
-	for k := range mc.originalItems {
+	keys := make([]K, 0, len(mc.items))
+	for k := range mc.items {
 		keys = append(keys, k)
 	}
 
@@ -80,8 +80,8 @@ func (mc *MapCollection[K, V]) Keys() *SliceCollection[K] {
 }
 
 func (mc *MapCollection[K, V]) Values() *SliceCollection[V] {
-	values := make([]V, 0, len(mc.originalItems))
-	for _, v := range mc.originalItems {
+	values := make([]V, 0, len(mc.items))
+	for _, v := range mc.items {
 		values = append(values, v)
 	}
 
