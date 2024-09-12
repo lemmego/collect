@@ -3,8 +3,7 @@ package collect
 import "errors"
 
 type SliceCollection[T any] struct {
-	originalItems []T
-	items         []T
+	items []T
 }
 
 type MapCollection[K comparable, V any] struct {
@@ -13,7 +12,7 @@ type MapCollection[K comparable, V any] struct {
 }
 
 func NewSlice[T any](xs []T) *SliceCollection[T] {
-	return &SliceCollection[T]{originalItems: xs, items: xs}
+	return &SliceCollection[T]{items: xs}
 }
 
 func NewMap[K comparable, V any](xs map[K]V) *MapCollection[K, V] {
@@ -25,14 +24,10 @@ func (sc *SliceCollection[T]) Get() []T {
 }
 
 func (sc *SliceCollection[T]) All() []T {
-	return sc.originalItems
+	return sc.Items()
 }
 
 func (sc *SliceCollection[T]) Items() []T {
-	if sc.items == nil {
-		sc.items = make([]T, len(sc.originalItems))
-		copy(sc.items, sc.originalItems)
-	}
 	return sc.items
 }
 
