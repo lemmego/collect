@@ -7,8 +7,7 @@ type SliceCollection[T any] struct {
 }
 
 type MapCollection[K comparable, V any] struct {
-	originalItems map[K]V
-	items         map[K]V
+	items map[K]V
 }
 
 func NewSlice[T any](xs []T) *SliceCollection[T] {
@@ -16,7 +15,7 @@ func NewSlice[T any](xs []T) *SliceCollection[T] {
 }
 
 func NewMap[K comparable, V any](xs map[K]V) *MapCollection[K, V] {
-	return &MapCollection[K, V]{originalItems: xs, items: xs}
+	return &MapCollection[K, V]{items: xs}
 }
 
 func (sc *SliceCollection[T]) Get() []T {
@@ -32,12 +31,6 @@ func (sc *SliceCollection[T]) Items() []T {
 }
 
 func (mc *MapCollection[K, V]) Items() map[K]V {
-	if mc.items == nil {
-		mc.items = make(map[K]V, len(mc.originalItems))
-		for k, v := range mc.originalItems {
-			mc.items[k] = v
-		}
-	}
 	return mc.items
 }
 
@@ -46,7 +39,7 @@ func (mc *MapCollection[K, V]) Get() map[K]V {
 }
 
 func (mc *MapCollection[K, V]) All() map[K]V {
-	return mc.originalItems
+	return mc.Items()
 }
 
 func (sc *SliceCollection[T]) Len() int {
@@ -89,7 +82,7 @@ func (sc *SliceCollection[T]) Each(f func(T, int)) *SliceCollection[T] {
 }
 
 func (mc *MapCollection[K, V]) Each(f func(V, K)) *MapCollection[K, V] {
-	for k, v := range mc.originalItems {
+	for k, v := range mc.items {
 		f(v, k)
 	}
 	return mc
@@ -101,12 +94,15 @@ func (sc *SliceCollection[T]) Filter(f func(T, int) bool) *SliceCollection[T] {
 }
 
 func (mc *MapCollection[K, V]) Filter(f func(V, K) bool) *MapCollection[K, V] {
-	mc.items = make(map[K]V, len(mc.originalItems))
-	for k, v := range mc.originalItems {
+	filtered := make(map[K]V, len(mc.items))
+	for k, v := range mc.items {
 		if f(v, k) {
-			mc.items[k] = v
+			filtered[k] = v
 		}
 	}
+
+	mc.items = filtered
+
 	return mc
 }
 
@@ -116,10 +112,13 @@ func (sc *SliceCollection[T]) Map(f func(T, int) T) *SliceCollection[T] {
 }
 
 func (mc *MapCollection[K, V]) Map(f func(V, K) V) *MapCollection[K, V] {
-	mc.items = make(map[K]V, len(mc.originalItems))
-	for k, v := range mc.originalItems {
-		mc.items[k] = f(v, k)
+	mapped := make(map[K]V, len(mc.items))
+	for k, v := range mc.items {
+		mapped[k] = f(v, k)
 	}
+
+	mc.items = mapped
+
 	return mc
 }
 
@@ -134,7 +133,7 @@ func (sc *SliceCollection[T]) Find(f func(T) bool) (T, error) {
 }
 
 func (mc *MapCollection[K, V]) Find(f func(V) bool) (V, error) {
-	for _, v := range mc.originalItems {
+	for _, v := range mc.items {
 		if f(v) {
 			return v, nil
 		}
