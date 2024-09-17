@@ -142,8 +142,8 @@ func (mc *MapCollection[K, V]) Find(f func(V) bool) (V, error) {
 	return zero, errors.New("not found")
 }
 
-func (sc *SliceCollection[T]) Reduce(f func(T, T) T, zero T) T {
-	return Reduce(sc.Items(), f, zero)
+func (sc *SliceCollection[T]) Reduce(f func(T, T, int) T, initial T) T {
+	return Reduce(sc.Items(), f, initial)
 }
 
 // ================== Base Functions ==================
@@ -172,11 +172,11 @@ func Filter[T any](xs []T, f func(T, int) bool) []T {
 	return ys
 }
 
-func Reduce[T any](xs []T, f func(T, T) T, zero T) T {
-	for _, x := range xs {
-		zero = f(zero, x)
+func Reduce[T any](xs []T, f func(T, T, int) T, initial T) T {
+	for k, x := range xs {
+		initial = f(initial, x, k)
 	}
-	return zero
+	return initial
 }
 
 func Find[T any](xs []T, f func(T) bool) (T, bool) {
