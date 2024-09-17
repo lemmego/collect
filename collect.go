@@ -146,6 +146,14 @@ func (sc *SliceCollection[T]) Reduce(f func(T, T, int) T, initial T) T {
 	return Reduce(sc.Items(), f, initial)
 }
 
+func (mc *MapCollection[K, V]) Reduce(f func(V, V, K) V, initial V) V {
+	for k, x := range mc.items {
+		initial = f(initial, x, k)
+	}
+
+	return initial
+}
+
 // ================== Base Functions ==================
 
 func Each[T any](xs []T, f func(T, int)) {
