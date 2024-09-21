@@ -1,6 +1,8 @@
 package collect
 
-import "errors"
+import (
+	"errors"
+)
 
 type SliceCollection[T any] struct {
 	items []T
@@ -152,6 +154,18 @@ func (mc *MapCollection[K, V]) Reduce(f func(V, V, K) V, initial V) V {
 	}
 
 	return initial
+}
+
+func (sc *SliceCollection[T]) FindIndex(f func(T) bool) int {
+	return FindIndex(sc.Items(), f)
+}
+
+func (sc *SliceCollection[T]) FindLast(f func(T) bool) (T, bool) {
+	return FindLast(sc.Items(), f)
+}
+
+func (sc *SliceCollection[T]) FindLastIndex(f func(T) bool) int {
+	return FindLastIndex(sc.Items(), f)
 }
 
 // ================== Base Functions ==================

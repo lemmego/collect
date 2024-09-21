@@ -51,6 +51,70 @@ func TestMapCollectionReduce(t *testing.T) {
 	}
 }
 
+func TestSliceCollectionFindIndex(t *testing.T) {
+	sc := NewSlice([]int{1, 2, 3, 4, 5})
+
+	index := sc.FindIndex(func(x int) bool {
+		return x == 3
+	})
+
+	if index != 2 {
+		t.Errorf("Expected index 2, got %d", index)
+	}
+
+	index = sc.FindIndex(func(x int) bool {
+		return x == 6
+	})
+
+	if index != -1 {
+		t.Errorf("Expected index -1, got %d", index)
+	}
+}
+
+func TestSliceCollectionFindLast(t *testing.T) {
+	sc := NewSlice([]int{1, 2, 3, 4, 5})
+
+	result, found := sc.FindLast(func(x int) bool {
+		return x%2 == 0
+	})
+
+	if !found {
+		t.Error("Expected to find an even number")
+	}
+
+	if result != 4 {
+		t.Errorf("Expected 4, got %d", result)
+	}
+
+	_, notFound := sc.FindLast(func(x int) bool {
+		return x > 10
+	})
+
+	if notFound {
+		t.Error("Expected not to find a number greater than 10")
+	}
+}
+
+func TestSliceCollectionFindLastIndex(t *testing.T) {
+	sc := NewSlice([]int{1, 2, 3, 4, 5, 4, 3, 2, 1})
+
+	index := sc.FindLastIndex(func(x int) bool {
+		return x == 4
+	})
+
+	if index != 5 {
+		t.Errorf("Expected index 5, got %d", index)
+	}
+
+	index = sc.FindLastIndex(func(x int) bool {
+		return x == 6
+	})
+
+	if index != -1 {
+		t.Errorf("Expected index -1, got %d", index)
+	}
+}
+
 // ================== Base Functions ==================
 
 func TestEach(t *testing.T) {
