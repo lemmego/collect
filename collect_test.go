@@ -4,6 +4,55 @@ import (
 	"testing"
 )
 
+func TestSliceCollectionReduce(t *testing.T) {
+	sc := NewSlice([]int{1, 2, 3, 4, 5})
+
+	sum := sc.Reduce(func(acc, curr, index int) int {
+		return acc + curr
+	}, 0)
+
+	expected := 15
+	if sum != expected {
+		t.Errorf("Expected sum to be %d, but got %d", expected, sum)
+	}
+
+	product := sc.Reduce(func(acc, curr, index int) int {
+		return acc * curr
+	}, 1)
+
+	expected = 120
+	if product != expected {
+		t.Errorf("Expected product to be %d, but got %d", expected, product)
+	}
+}
+
+func TestMapCollectionReduce(t *testing.T) {
+	mc := NewMap(map[string]int{"a": 1, "b": 2, "c": 3})
+
+	result := mc.Reduce(func(acc int, val int, key string) int {
+		return acc + val
+	}, 0)
+
+	expected := 6
+	if result != expected {
+		t.Errorf("Expected %d, but got %d", expected, result)
+	}
+
+	// Test with string concatenation
+	mcString := NewMap(map[int]string{1: "hello", 2: "world", 3: "!"})
+
+	resultString := mcString.Reduce(func(acc string, val string, key int) string {
+		return acc + val
+	}, "")
+
+	expectedString := "helloworld!"
+	if resultString != expectedString {
+		t.Errorf("Expected %s, but got %s", expectedString, resultString)
+	}
+}
+
+// ================== Base Functions ==================
+
 func TestEach(t *testing.T) {
 	arr := []int{1, 2, 3}
 	Each(arr, func(x int, i int) {
@@ -142,7 +191,7 @@ func TestConcatMap(t *testing.T) {
 	result := ConcatMap(arr, func(x int) []int {
 		return []int{x, x * 2}
 	})
-	t.Log(result)
+
 	if len(result) != 6 {
 		t.Errorf("Expected 6, got %d", len(result))
 	}
