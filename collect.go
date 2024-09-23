@@ -2,6 +2,8 @@ package collect
 
 import (
 	"errors"
+	"fmt"
+	"sort"
 )
 
 type SliceCollection[T any] struct {
@@ -149,10 +151,18 @@ func (sc *SliceCollection[T]) Reduce(f func(T, T, int) T, initial T) T {
 }
 
 func (mc *MapCollection[K, V]) Reduce(f func(V, V, K) V, initial V) V {
-	for k, x := range mc.items {
-		initial = f(initial, x, k)
+	keys := make([]K, 0, len(mc.items))
+	for k := range mc.items {
+		keys = append(keys, k)
 	}
 
+	sort.Slice(keys, func(i, j int) bool {
+		return fmt.Sprintf("%v", keys[i]) < fmt.Sprintf("%v", keys[j])
+	})
+
+	for _, k := range keys {
+		initial = f(initial, mc.items[k], k)
+	}
 	return initial
 }
 
