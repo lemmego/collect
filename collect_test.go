@@ -115,6 +115,145 @@ func TestSliceCollectionFindLastIndex(t *testing.T) {
 	}
 }
 
+func TestSliceCollectionCount(t *testing.T) {
+	sc := NewSlice([]int{1, 2, 3, 4, 5})
+
+	count := sc.Count(func(x int, _ int) bool {
+		return x%2 == 0
+	})
+
+	if count != 2 {
+		t.Errorf("Expected count to be 2, but got %d", count)
+	}
+
+	count = sc.Count(func(x int, _ int) bool {
+		return x > 10
+	})
+
+	if count != 0 {
+		t.Errorf("Expected count to be 0, but got %d", count)
+	}
+}
+
+func TestMapCollectionCount(t *testing.T) {
+	testCases := []struct {
+		name      string
+		input     map[string]int
+		predicate func(int, string) bool
+		expected  int
+	}{
+		{
+			name:      "Count even values",
+			input:     map[string]int{"a": 1, "b": 2, "c": 3, "d": 4},
+			predicate: func(v int, _ string) bool { return v%2 == 0 },
+			expected:  2,
+		},
+		{
+			name:      "Count keys with length > 1",
+			input:     map[string]int{"a": 1, "bb": 2, "ccc": 3, "d": 4},
+			predicate: func(_ int, k string) bool { return len(k) > 1 },
+			expected:  2,
+		},
+		{
+			name:      "Count all",
+			input:     map[string]int{"a": 1, "b": 2, "c": 3},
+			predicate: func(_ int, _ string) bool { return true },
+			expected:  3,
+		},
+		{
+			name:      "Count none",
+			input:     map[string]int{"a": 1, "b": 2, "c": 3},
+			predicate: func(_ int, _ string) bool { return false },
+			expected:  0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mc := NewMap(tc.input)
+			result := mc.Count(tc.predicate)
+			if result != tc.expected {
+				t.Errorf("Expected count %d, but got %d", tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestSliceCollectionSome(t *testing.T) {
+	sc := NewSlice([]int{1, 2, 3, 4, 5})
+
+	// Test when condition is met
+	result := sc.Some(func(x int, _ int) bool {
+		return x > 3
+	})
+	if !result {
+		t.Errorf("Expected Some to return true, but got false")
+	}
+
+	// Test when condition is not met
+	result = sc.Some(func(x int, _ int) bool {
+		return x > 10
+	})
+	if result {
+		t.Errorf("Expected Some to return false, but got true")
+	}
+
+	// Test with empty slice
+	emptySlice := NewSlice([]int{})
+	result = emptySlice.Some(func(x int, _ int) bool {
+		return x > 0
+	})
+	if result {
+		t.Errorf("Expected Some on empty slice to return false, but got true")
+	}
+
+	// Test using index in the predicate function
+	result = sc.Some(func(x int, i int) bool {
+		return i == 2 && x == 3
+	})
+	if !result {
+		t.Errorf("Expected Some to return true for index-based condition, but got false")
+	}
+}
+
+func TestMapCollectionSome(t *testing.T) {
+	testCases := []struct {
+		name      string
+		input     map[string]int
+		predicate func(int, string) bool
+		expected  bool
+	}{
+		{
+			name:      "Some elements satisfy condition",
+			input:     map[string]int{"a": 1, "b": 2, "c": 3},
+			predicate: func(v int, k string) bool { return v > 2 },
+			expected:  true,
+		},
+		{
+			name:      "No elements satisfy condition",
+			input:     map[string]int{"a": 1, "b": 2, "c": 3},
+			predicate: func(v int, k string) bool { return v > 5 },
+			expected:  false,
+		},
+		{
+			name:      "Empty map",
+			input:     map[string]int{},
+			predicate: func(v int, k string) bool { return true },
+			expected:  false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mc := NewMap(tc.input)
+			result := mc.Some(tc.predicate)
+			if result != tc.expected {
+				t.Errorf("Expected %v, but got %v", tc.expected, result)
+			}
+		})
+	}
+}
+
 // ================== Base Functions ==================
 
 func TestEach(t *testing.T) {

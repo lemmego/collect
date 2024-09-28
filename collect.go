@@ -178,6 +178,34 @@ func (sc *SliceCollection[T]) FindLastIndex(f func(T) bool) int {
 	return FindLastIndex(sc.Items(), f)
 }
 
+func (sc *SliceCollection[T]) Count(f func(T, int) bool) int {
+	return Count(sc.Items(), f)
+}
+
+func (mc *MapCollection[K, V]) Count(f func(V, K) bool) int {
+	count := 0
+	for k, x := range mc.items {
+		if f(x, k) {
+			count++
+		}
+	}
+
+	return count
+}
+
+func (sc *SliceCollection[T]) Some(f func(T, int) bool) bool {
+	return Some(sc.Items(), f)
+}
+
+func (mc *MapCollection[K, V]) Some(f func(V, K) bool) bool {
+	for k, x := range mc.items {
+		if f(x, k) {
+			return true
+		}
+	}
+	return false
+}
+
 // ================== Base Functions ==================
 
 func Each[T any](xs []T, f func(T, int)) {
