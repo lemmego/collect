@@ -206,6 +206,38 @@ func (mc *MapCollection[K, V]) Some(f func(V, K) bool) bool {
 	return false
 }
 
+func (sc *SliceCollection[T]) Every(f func(T, int) bool) bool {
+	return Every(sc.Items(), f)
+}
+
+func (mc *MapCollection[K, V]) Every(f func(V, K) bool) bool {
+	for k, x := range mc.items {
+		if !f(x, k) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (sc *SliceCollection[T]) None(f func(T, int) bool) bool {
+	return None(sc.Items(), f)
+}
+
+func (mc *MapCollection[K, V]) None(f func(V, K) bool) bool {
+	for k, x := range mc.items {
+		if f(x, k) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (sc *SliceCollection[T]) Concat(values []T) []T {
+	return Concat(sc.Items(), values)
+}
+
 // ================== Base Functions ==================
 
 func Each[T any](xs []T, f func(T, int)) {

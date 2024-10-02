@@ -1,6 +1,7 @@
 package collect
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -251,6 +252,131 @@ func TestMapCollectionSome(t *testing.T) {
 				t.Errorf("Expected %v, but got %v", tc.expected, result)
 			}
 		})
+	}
+}
+
+func TestSliceCollectionEvery(t *testing.T) {
+	sc := NewSlice([]int{1, 2, 3, 4, 5})
+
+	// Test when not all elements satisfy the condition
+	allEven := sc.Every(func(x int, _ int) bool {
+		return x%2 == 0
+	})
+	if allEven {
+		t.Errorf("Expected not all elements to be even, but got true")
+	}
+
+	// Test when all elements satisfy the condition
+	allPositive := sc.Every(func(x int, _ int) bool {
+		return x > 0
+	})
+	if !allPositive {
+		t.Errorf("Expected all elements to be positive, but got false")
+	}
+
+	// Test with empty slice
+	emptySlice := NewSlice([]int{})
+	allZero := emptySlice.Every(func(x int, _ int) bool {
+		return x == 0
+	})
+	if !allZero {
+		t.Errorf("Expected true for empty slice, but got false")
+	}
+}
+
+func TestMapCollectionEvery(t *testing.T) {
+	testCases := []struct {
+		name      string
+		input     map[string]int
+		predicate func(int, string) bool
+		expected  bool
+	}{
+		{
+			name:      "All elements satisfy predicate",
+			input:     map[string]int{"a": 1, "b": 2, "c": 3},
+			predicate: func(v int, k string) bool { return v > 0 },
+			expected:  true,
+		},
+		{
+			name:      "Some elements don't satisfy predicate",
+			input:     map[string]int{"a": 1, "b": -2, "c": 3},
+			predicate: func(v int, k string) bool { return v > 0 },
+			expected:  false,
+		},
+		{
+			name:      "Empty map",
+			input:     map[string]int{},
+			predicate: func(v int, k string) bool { return v > 0 },
+			expected:  true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mc := NewMap(tc.input)
+			result := mc.Every(tc.predicate)
+			if result != tc.expected {
+				t.Errorf("Expected %v, but got %v", tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestSliceCollectionNone(t *testing.T) {
+	sc := NewSlice([]int{1, 2, 3, 4, 5})
+
+	result := sc.None(func(x int, _ int) bool {
+		return x > 10
+	})
+	if !result {
+		t.Errorf("Expected None to return true, got false")
+	}
+
+	result = sc.None(func(x int, _ int) bool {
+		return x == 3
+	})
+	if result {
+		t.Errorf("Expected None to return false, got true")
+	}
+}
+
+func TestMapCollectionNone(t *testing.T) {
+	mc := NewMap(map[string]int{"a": 1, "b": 2, "c": 3})
+
+	result := mc.None(func(v int, _ string) bool {
+		return v > 10
+	})
+	if !result {
+		t.Errorf("Expected None to return true, got false")
+	}
+
+	result = mc.None(func(v int, _ string) bool {
+		return v == 2
+	})
+	if result {
+		t.Errorf("Expected None to return false, got true")
+	}
+}
+
+func TestSliceCollectionConcat(t *testing.T) {
+	sc := NewSlice([]int{1, 2, 3})
+	result := sc.Concat([]int{4, 5, 6})
+	expected := []int{1, 2, 3, 4, 5, 6}
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Expected %v, but got %v", expected, result)
+	}
+
+	// Test with empty slice
+	emptyResult := sc.Concat([]int{})
+	if !reflect.DeepEqual(emptyResult, sc.Items()) {
+		t.Errorf("Expected %v, but got %v", sc.Items(), emptyResult)
+	}
+
+	// Test with nil slice
+	nilResult := sc.Concat(nil)
+	if !reflect.DeepEqual(nilResult, sc.Items()) {
+		t.Errorf("Expected %v, but got %v", sc.Items(), nilResult)
 	}
 }
 
