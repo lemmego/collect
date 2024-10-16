@@ -238,6 +238,12 @@ func (sc *SliceCollection[T]) Concat(values []T) []T {
 	return Concat(sc.Items(), values)
 }
 
+func (sc *SliceCollection[T]) Reverse() *SliceCollection[T] {
+	sc.items = Reverse(sc.Items())
+
+	return sc
+}
+
 // ================== Base Functions ==================
 
 func Each[T any](xs []T, f func(T, int)) {

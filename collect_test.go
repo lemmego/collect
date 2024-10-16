@@ -380,6 +380,41 @@ func TestSliceCollectionConcat(t *testing.T) {
 	}
 }
 
+func TestSliceCollectionReverse(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    []int
+		expected []int
+	}{
+		{
+			name:     "Empty slice",
+			input:    []int{},
+			expected: []int{},
+		},
+		{
+			name:     "Single element",
+			input:    []int{1},
+			expected: []int{1},
+		},
+		{
+			name:     "Multiple elements",
+			input:    []int{1, 2, 3, 4, 5},
+			expected: []int{5, 4, 3, 2, 1},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sc := NewSlice(tc.input)
+			result := sc.Reverse()
+
+			if !reflect.DeepEqual(result.Items(), tc.expected) {
+				t.Errorf("Expected %v, but got %v", tc.expected, result.Items())
+			}
+		})
+	}
+}
+
 // ================== Base Functions ==================
 
 func TestEach(t *testing.T) {
