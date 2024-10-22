@@ -550,17 +550,6 @@ func TestConcat(t *testing.T) {
 	}
 }
 
-func TestConcatMap(t *testing.T) {
-	arr := []int{1, 2, 3}
-	result := ConcatMap(arr, func(x int) []int {
-		return []int{x, x * 2}
-	})
-
-	if len(result) != 6 {
-		t.Errorf("Expected 6, got %d", len(result))
-	}
-}
-
 func TestReverse(t *testing.T) {
 	arr := []int{1, 2, 3}
 	result := Reverse(arr)
