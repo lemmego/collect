@@ -238,6 +238,12 @@ func (sc *SliceCollection[T]) Concat(values []T) []T {
 	return Concat(sc.Items(), values)
 }
 
+func (sc *SliceCollection[T]) ConcatMap(f func(T) []T) *SliceCollection[T] {
+	sc.items = ConcatMap(sc.Items(), f)
+
+	return sc
+}
+
 func (sc *SliceCollection[T]) Reverse() *SliceCollection[T] {
 	sc.items = Reverse(sc.Items())
 
@@ -357,6 +363,14 @@ func Concat[T any](xs []T, ys []T) []T {
 	zs = append(zs, xs...)
 	zs = append(zs, ys...)
 	return zs
+}
+
+func ConcatMap[T any, U any](xs []T, f func(T) []U) []U {
+	ys := make([]U, 0, len(xs))
+	for _, x := range xs {
+		ys = append(ys, f(x)...)
+	}
+	return ys
 }
 
 func Reverse[T any](xs []T) []T {

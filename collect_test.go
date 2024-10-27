@@ -380,6 +380,40 @@ func TestSliceCollectionConcat(t *testing.T) {
 	}
 }
 
+func TestSliceCollectionConcatMap(t *testing.T) {
+	// Test with integers
+	nums := NewSlice([]int{1, 2, 3})
+	result := nums.ConcatMap(func(x int) []int {
+		return []int{x, x * 2}
+	})
+	expected := []int{1, 2, 2, 4, 3, 6}
+
+	if !reflect.DeepEqual(result.Items(), expected) {
+		t.Errorf("ConcatMap failed: got %v, want %v", result.Items(), expected)
+	}
+
+	// Test with strings
+	strs := NewSlice([]string{"a", "b"})
+	strResult := strs.ConcatMap(func(s string) []string {
+		return []string{s + "1", s + "2"}
+	})
+	expectedStrs := []string{"a1", "a2", "b1", "b2"}
+
+	if !reflect.DeepEqual(strResult.Items(), expectedStrs) {
+		t.Errorf("ConcatMap failed: got %v, want %v", strResult.Items(), expectedStrs)
+	}
+
+	// Test empty slice
+	empty := NewSlice([]int{})
+	emptyResult := empty.ConcatMap(func(x int) []int {
+		return []int{x, x * 2}
+	})
+
+	if len(emptyResult.Items()) != 0 {
+		t.Error("ConcatMap on empty slice should return empty slice")
+	}
+}
+
 func TestSliceCollectionReverse(t *testing.T) {
 	testCases := []struct {
 		name     string
