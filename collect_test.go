@@ -449,6 +449,96 @@ func TestSliceCollectionReverse(t *testing.T) {
 	}
 }
 
+func TestSliceCollectionUniq(t *testing.T) {
+	// Test basic types
+	t.Run("integers", func(t *testing.T) {
+		nums := NewSlice([]int{1, 2, 2, 3, 3, 4})
+		result := nums.Uniq().Items()
+		expected := []int{1, 2, 3, 4}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("Expected %v, got %v", expected, result)
+		}
+	})
+
+	t.Run("strings", func(t *testing.T) {
+		strs := NewSlice([]string{"a", "b", "b", "c"})
+		result := strs.Uniq().Items()
+		expected := []string{"a", "b", "c"}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("Expected %v, got %v", expected, result)
+		}
+	})
+
+	// Test struct types
+	t.Run("structs", func(t *testing.T) {
+		type Person struct {
+			Name string
+			Age  int
+		}
+		people := NewSlice([]Person{
+			{Name: "Alice", Age: 30},
+			{Name: "Bob", Age: 25},
+			{Name: "Alice", Age: 30},
+		})
+		result := people.Uniq().Items()
+		expected := []Person{
+			{Name: "Alice", Age: 30},
+			{Name: "Bob", Age: 25},
+		}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("Expected %v, got %v", expected, result)
+		}
+	})
+
+	// Test pointer types
+	t.Run("pointers", func(t *testing.T) {
+		type Point struct {
+			X, Y int
+		}
+		p1 := &Point{1, 1}
+		p2 := &Point{2, 2}
+		p3 := &Point{1, 1}
+		points := NewSlice([]*Point{p1, p2, p1, p3})
+		result := points.Uniq().Items()
+		if len(result) != 3 {
+			t.Errorf("Expected 3, got %d", len(result))
+		}
+	})
+
+	t.Run("slices should panic", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic for slice elements")
+			}
+		}()
+
+		sliceOfSlices := NewSlice([][]int{{1, 2}, {3, 4}, {1, 2}})
+		sliceOfSlices.Uniq()
+	})
+
+	t.Run("funcs should panic", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic for function elements")
+			}
+		}()
+
+		sliceOfFuncs := NewSlice([]func(){func() {}, func() {}})
+		sliceOfFuncs.Uniq()
+	})
+
+	t.Run("maps should panic", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic for map elements")
+			}
+		}()
+
+		sliceOfMaps := NewSlice([]map[string]int{{"a": 1}, {"b": 2}, {"a": 1}})
+		sliceOfMaps.Uniq()
+	})
+}
+
 // ================== Base Functions ==================
 
 func TestEach(t *testing.T) {
@@ -599,11 +689,27 @@ func TestReverse(t *testing.T) {
 }
 
 func TestUniq(t *testing.T) {
-	arr := []int{1, 2, 3, 2, 1}
-	result := Uniq(arr)
-	if len(result) != 3 {
-		t.Errorf("Expected 3, got %d", len(result))
-	}
+	t.Run("basic types", func(t *testing.T) {
+		arr := []int{1, 2, 3, 2, 1}
+		result := Uniq(arr)
+		if len(result) != 3 {
+			t.Errorf("Expected 3, got %d", len(result))
+		}
+	})
+
+	t.Run("pointer types", func(t *testing.T) {
+		type Point struct {
+			X, Y int
+		}
+		p1 := &Point{1, 1}
+		p2 := &Point{2, 2}
+		p3 := &Point{1, 1}
+		arr := []*Point{p1, p2, p1, p3}
+		result := Uniq(arr)
+		if len(result) != 3 {
+			t.Errorf("Expected 3, got %d", len(result))
+		}
+	})
 }
 
 func TestUniqBy(t *testing.T) {

@@ -250,6 +250,11 @@ func (sc *SliceCollection[T]) Reverse() *SliceCollection[T] {
 	return sc
 }
 
+func (sc *SliceCollection[T]) Uniq() *SliceCollection[T] {
+	sc.items = uniqReflect(sc.Items())
+	return sc
+}
+
 // ================== Base Functions ==================
 
 func Each[T any](xs []T, f func(T, int)) {
@@ -379,6 +384,65 @@ func Reverse[T any](xs []T) []T {
 		zs[len(xs)-i-1] = x
 	}
 	return zs
+}
+
+func uniqReflect[T any](xs []T) []T {
+	if len(xs) <= 1 {
+		return xs
+	}
+
+	// Try to use built-in types first for better performance.
+	// For now we will consider only frequently used data types.
+	switch any(xs[0]).(type) {
+	case int:
+		m := make(map[int]struct{}, len(xs))
+		result := make([]T, 0, len(xs))
+		for _, x := range xs {
+			v := any(x).(int)
+			if _, exists := m[v]; !exists {
+				m[v] = struct{}{}
+				result = append(result, x)
+			}
+		}
+
+		return result
+
+	case string:
+		m := make(map[string]struct{}, len(xs))
+		result := make([]T, 0, len(xs))
+		for _, x := range xs {
+			v := any(x).(string)
+			if _, exists := m[v]; !exists {
+				m[v] = struct{}{}
+				result = append(result, x)
+			}
+		}
+		return result
+
+	case float64:
+		m := make(map[float64]struct{}, len(xs))
+		result := make([]T, 0, len(xs))
+		for _, x := range xs {
+			v := any(x).(float64)
+			if _, exists := m[v]; !exists {
+				m[v] = struct{}{}
+				result = append(result, x)
+			}
+		}
+		return result
+
+	default:
+		// Fallback to less efficient approach for other types
+		seen := make(map[any]struct{}, len(xs))
+		result := make([]T, 0, len(xs))
+		for _, x := range xs {
+			if _, exists := seen[any(x)]; !exists {
+				seen[any(x)] = struct{}{}
+				result = append(result, x)
+			}
+		}
+		return result
+	}
 }
 
 func Uniq[T comparable](xs []T) []T {
