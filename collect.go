@@ -163,6 +163,7 @@ func (mc *MapCollection[K, V]) Reduce(f func(V, V, K) V, initial V) V {
 	for _, k := range keys {
 		initial = f(initial, mc.items[k], k)
 	}
+
 	return initial
 }
 
@@ -178,11 +179,19 @@ func (sc *SliceCollection[T]) FindLastIndex(f func(T) bool) int {
 	return FindLastIndex(sc.Items(), f)
 }
 
-func (sc *SliceCollection[T]) Count(f func(T, int) bool) int {
-	return Count(sc.Items(), f)
+func (sc *SliceCollection[T]) Count() int {
+	return len(sc.Items())
 }
 
-func (mc *MapCollection[K, V]) Count(f func(V, K) bool) int {
+func (mc *MapCollection[K, V]) Count() int {
+	return len(mc.Items())
+}
+
+func (sc *SliceCollection[T]) CountBy(f func(T, int) bool) int {
+	return CountBy(sc.Items(), f)
+}
+
+func (mc *MapCollection[K, V]) CountBy(f func(V, K) bool) int {
 	count := 0
 	for k, x := range mc.items {
 		if f(x, k) {
@@ -203,6 +212,7 @@ func (mc *MapCollection[K, V]) Some(f func(V, K) bool) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -240,13 +250,11 @@ func (sc *SliceCollection[T]) Concat(values []T) []T {
 
 func (sc *SliceCollection[T]) ConcatMap(f func(T) []T) *SliceCollection[T] {
 	sc.items = ConcatMap(sc.Items(), f)
-
 	return sc
 }
 
 func (sc *SliceCollection[T]) Reverse() *SliceCollection[T] {
 	sc.items = Reverse(sc.Items())
-
 	return sc
 }
 
@@ -326,7 +334,7 @@ func FindLastIndex[T any](xs []T, f func(T) bool) int {
 	return -1
 }
 
-func Count[T any](xs []T, f func(T, int) bool) int {
+func CountBy[T any](xs []T, f func(T, int) bool) int {
 	count := 0
 	for i, x := range xs {
 		if f(x, i) {

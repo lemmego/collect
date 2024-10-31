@@ -117,9 +117,52 @@ func TestSliceCollectionFindLastIndex(t *testing.T) {
 }
 
 func TestSliceCollectionCount(t *testing.T) {
+	t.Run("empty slice", func(t *testing.T) {
+		sc := NewSlice([]int{})
+		if sc.Count() != 0 {
+			t.Errorf("Expected count 0, got %d", sc.Count())
+		}
+	})
+
+	t.Run("non-empty slice", func(t *testing.T) {
+		sc := NewSlice([]int{1, 2, 3})
+		if sc.Count() != 3 {
+			t.Errorf("Expected count 3, got %d", sc.Count())
+		}
+	})
+
+	t.Run("string slice", func(t *testing.T) {
+		sc := NewSlice([]string{"a", "b", "c", "d"})
+		if sc.Count() != 4 {
+			t.Errorf("Expected count 4, got %d", sc.Count())
+		}
+	})
+}
+
+func TestMapCollectionCount(t *testing.T) {
+	t.Run("empty map", func(t *testing.T) {
+		m := NewMap(map[string]int{})
+		if m.Count() != 0 {
+			t.Errorf("Expected count 0, got %d", m.Count())
+		}
+	})
+
+	t.Run("non-empty map", func(t *testing.T) {
+		m := NewMap(map[string]int{
+			"a": 1,
+			"b": 2,
+			"c": 3,
+		})
+		if m.Count() != 3 {
+			t.Errorf("Expected count 3, got %d", m.Count())
+		}
+	})
+}
+
+func TestSliceCollectionCountBy(t *testing.T) {
 	sc := NewSlice([]int{1, 2, 3, 4, 5})
 
-	count := sc.Count(func(x int, _ int) bool {
+	count := sc.CountBy(func(x int, _ int) bool {
 		return x%2 == 0
 	})
 
@@ -127,7 +170,7 @@ func TestSliceCollectionCount(t *testing.T) {
 		t.Errorf("Expected count to be 2, but got %d", count)
 	}
 
-	count = sc.Count(func(x int, _ int) bool {
+	count = sc.CountBy(func(x int, _ int) bool {
 		return x > 10
 	})
 
@@ -136,7 +179,7 @@ func TestSliceCollectionCount(t *testing.T) {
 	}
 }
 
-func TestMapCollectionCount(t *testing.T) {
+func TestMapCollectionCountBy(t *testing.T) {
 	testCases := []struct {
 		name      string
 		input     map[string]int
@@ -172,7 +215,7 @@ func TestMapCollectionCount(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mc := NewMap(tc.input)
-			result := mc.Count(tc.predicate)
+			result := mc.CountBy(tc.predicate)
 			if result != tc.expected {
 				t.Errorf("Expected count %d, but got %d", tc.expected, result)
 			}
@@ -579,9 +622,9 @@ func TestFilter(t *testing.T) {
 	}
 }
 
-func TestCount(t *testing.T) {
+func TestCountBy(t *testing.T) {
 	arr := []int{1, 2, 3, 4, 5}
-	result := Count(arr, func(x int, i int) bool {
+	result := CountBy(arr, func(x int, i int) bool {
 		return x%2 == 0
 	})
 	if result != 2 {
