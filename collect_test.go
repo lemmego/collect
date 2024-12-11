@@ -1,6 +1,7 @@
 package collect
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -116,9 +117,52 @@ func TestSliceCollectionFindLastIndex(t *testing.T) {
 }
 
 func TestSliceCollectionCount(t *testing.T) {
+	t.Run("empty slice", func(t *testing.T) {
+		sc := NewSlice([]int{})
+		if sc.Count() != 0 {
+			t.Errorf("Expected count 0, got %d", sc.Count())
+		}
+	})
+
+	t.Run("non-empty slice", func(t *testing.T) {
+		sc := NewSlice([]int{1, 2, 3})
+		if sc.Count() != 3 {
+			t.Errorf("Expected count 3, got %d", sc.Count())
+		}
+	})
+
+	t.Run("string slice", func(t *testing.T) {
+		sc := NewSlice([]string{"a", "b", "c", "d"})
+		if sc.Count() != 4 {
+			t.Errorf("Expected count 4, got %d", sc.Count())
+		}
+	})
+}
+
+func TestMapCollectionCount(t *testing.T) {
+	t.Run("empty map", func(t *testing.T) {
+		m := NewMap(map[string]int{})
+		if m.Count() != 0 {
+			t.Errorf("Expected count 0, got %d", m.Count())
+		}
+	})
+
+	t.Run("non-empty map", func(t *testing.T) {
+		m := NewMap(map[string]int{
+			"a": 1,
+			"b": 2,
+			"c": 3,
+		})
+		if m.Count() != 3 {
+			t.Errorf("Expected count 3, got %d", m.Count())
+		}
+	})
+}
+
+func TestSliceCollectionCountBy(t *testing.T) {
 	sc := NewSlice([]int{1, 2, 3, 4, 5})
 
-	count := sc.Count(func(x int, _ int) bool {
+	count := sc.CountBy(func(x int, _ int) bool {
 		return x%2 == 0
 	})
 
@@ -126,7 +170,7 @@ func TestSliceCollectionCount(t *testing.T) {
 		t.Errorf("Expected count to be 2, but got %d", count)
 	}
 
-	count = sc.Count(func(x int, _ int) bool {
+	count = sc.CountBy(func(x int, _ int) bool {
 		return x > 10
 	})
 
@@ -135,7 +179,7 @@ func TestSliceCollectionCount(t *testing.T) {
 	}
 }
 
-func TestMapCollectionCount(t *testing.T) {
+func TestMapCollectionCountBy(t *testing.T) {
 	testCases := []struct {
 		name      string
 		input     map[string]int
@@ -171,7 +215,7 @@ func TestMapCollectionCount(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mc := NewMap(tc.input)
-			result := mc.Count(tc.predicate)
+			result := mc.CountBy(tc.predicate)
 			if result != tc.expected {
 				t.Errorf("Expected count %d, but got %d", tc.expected, result)
 			}
@@ -254,6 +298,290 @@ func TestMapCollectionSome(t *testing.T) {
 	}
 }
 
+func TestSliceCollectionEvery(t *testing.T) {
+	sc := NewSlice([]int{1, 2, 3, 4, 5})
+
+	// Test when not all elements satisfy the condition
+	allEven := sc.Every(func(x int, _ int) bool {
+		return x%2 == 0
+	})
+	if allEven {
+		t.Errorf("Expected not all elements to be even, but got true")
+	}
+
+	// Test when all elements satisfy the condition
+	allPositive := sc.Every(func(x int, _ int) bool {
+		return x > 0
+	})
+	if !allPositive {
+		t.Errorf("Expected all elements to be positive, but got false")
+	}
+
+	// Test with empty slice
+	emptySlice := NewSlice([]int{})
+	allZero := emptySlice.Every(func(x int, _ int) bool {
+		return x == 0
+	})
+	if !allZero {
+		t.Errorf("Expected true for empty slice, but got false")
+	}
+}
+
+func TestMapCollectionEvery(t *testing.T) {
+	testCases := []struct {
+		name      string
+		input     map[string]int
+		predicate func(int, string) bool
+		expected  bool
+	}{
+		{
+			name:      "All elements satisfy predicate",
+			input:     map[string]int{"a": 1, "b": 2, "c": 3},
+			predicate: func(v int, k string) bool { return v > 0 },
+			expected:  true,
+		},
+		{
+			name:      "Some elements don't satisfy predicate",
+			input:     map[string]int{"a": 1, "b": -2, "c": 3},
+			predicate: func(v int, k string) bool { return v > 0 },
+			expected:  false,
+		},
+		{
+			name:      "Empty map",
+			input:     map[string]int{},
+			predicate: func(v int, k string) bool { return v > 0 },
+			expected:  true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mc := NewMap(tc.input)
+			result := mc.Every(tc.predicate)
+			if result != tc.expected {
+				t.Errorf("Expected %v, but got %v", tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestSliceCollectionNone(t *testing.T) {
+	sc := NewSlice([]int{1, 2, 3, 4, 5})
+
+	result := sc.None(func(x int, _ int) bool {
+		return x > 10
+	})
+	if !result {
+		t.Errorf("Expected None to return true, got false")
+	}
+
+	result = sc.None(func(x int, _ int) bool {
+		return x == 3
+	})
+	if result {
+		t.Errorf("Expected None to return false, got true")
+	}
+}
+
+func TestMapCollectionNone(t *testing.T) {
+	mc := NewMap(map[string]int{"a": 1, "b": 2, "c": 3})
+
+	result := mc.None(func(v int, _ string) bool {
+		return v > 10
+	})
+	if !result {
+		t.Errorf("Expected None to return true, got false")
+	}
+
+	result = mc.None(func(v int, _ string) bool {
+		return v == 2
+	})
+	if result {
+		t.Errorf("Expected None to return false, got true")
+	}
+}
+
+func TestSliceCollectionConcat(t *testing.T) {
+	sc := NewSlice([]int{1, 2, 3})
+	result := sc.Concat([]int{4, 5, 6})
+	expected := []int{1, 2, 3, 4, 5, 6}
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Expected %v, but got %v", expected, result)
+	}
+
+	// Test with empty slice
+	emptyResult := sc.Concat([]int{})
+	if !reflect.DeepEqual(emptyResult, sc.Items()) {
+		t.Errorf("Expected %v, but got %v", sc.Items(), emptyResult)
+	}
+
+	// Test with nil slice
+	nilResult := sc.Concat(nil)
+	if !reflect.DeepEqual(nilResult, sc.Items()) {
+		t.Errorf("Expected %v, but got %v", sc.Items(), nilResult)
+	}
+}
+
+func TestSliceCollectionConcatMap(t *testing.T) {
+	// Test with integers
+	nums := NewSlice([]int{1, 2, 3})
+	result := nums.ConcatMap(func(x int) []int {
+		return []int{x, x * 2}
+	})
+	expected := []int{1, 2, 2, 4, 3, 6}
+
+	if !reflect.DeepEqual(result.Items(), expected) {
+		t.Errorf("ConcatMap failed: got %v, want %v", result.Items(), expected)
+	}
+
+	// Test with strings
+	strs := NewSlice([]string{"a", "b"})
+	strResult := strs.ConcatMap(func(s string) []string {
+		return []string{s + "1", s + "2"}
+	})
+	expectedStrs := []string{"a1", "a2", "b1", "b2"}
+
+	if !reflect.DeepEqual(strResult.Items(), expectedStrs) {
+		t.Errorf("ConcatMap failed: got %v, want %v", strResult.Items(), expectedStrs)
+	}
+
+	// Test empty slice
+	empty := NewSlice([]int{})
+	emptyResult := empty.ConcatMap(func(x int) []int {
+		return []int{x, x * 2}
+	})
+
+	if len(emptyResult.Items()) != 0 {
+		t.Error("ConcatMap on empty slice should return empty slice")
+	}
+}
+
+func TestSliceCollectionReverse(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    []int
+		expected []int
+	}{
+		{
+			name:     "Empty slice",
+			input:    []int{},
+			expected: []int{},
+		},
+		{
+			name:     "Single element",
+			input:    []int{1},
+			expected: []int{1},
+		},
+		{
+			name:     "Multiple elements",
+			input:    []int{1, 2, 3, 4, 5},
+			expected: []int{5, 4, 3, 2, 1},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sc := NewSlice(tc.input)
+			result := sc.Reverse()
+
+			if !reflect.DeepEqual(result.Items(), tc.expected) {
+				t.Errorf("Expected %v, but got %v", tc.expected, result.Items())
+			}
+		})
+	}
+}
+
+func TestSliceCollectionUniq(t *testing.T) {
+	// Test basic types
+	t.Run("integers", func(t *testing.T) {
+		nums := NewSlice([]int{1, 2, 2, 3, 3, 4})
+		result := nums.Uniq().Items()
+		expected := []int{1, 2, 3, 4}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("Expected %v, got %v", expected, result)
+		}
+	})
+
+	t.Run("strings", func(t *testing.T) {
+		strs := NewSlice([]string{"a", "b", "b", "c"})
+		result := strs.Uniq().Items()
+		expected := []string{"a", "b", "c"}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("Expected %v, got %v", expected, result)
+		}
+	})
+
+	// Test struct types
+	t.Run("structs", func(t *testing.T) {
+		type Person struct {
+			Name string
+			Age  int
+		}
+		people := NewSlice([]Person{
+			{Name: "Alice", Age: 30},
+			{Name: "Bob", Age: 25},
+			{Name: "Alice", Age: 30},
+		})
+		result := people.Uniq().Items()
+		expected := []Person{
+			{Name: "Alice", Age: 30},
+			{Name: "Bob", Age: 25},
+		}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("Expected %v, got %v", expected, result)
+		}
+	})
+
+	// Test pointer types
+	t.Run("pointers", func(t *testing.T) {
+		type Point struct {
+			X, Y int
+		}
+		p1 := &Point{1, 1}
+		p2 := &Point{2, 2}
+		p3 := &Point{1, 1}
+		points := NewSlice([]*Point{p1, p2, p1, p3})
+		result := points.Uniq().Items()
+		if len(result) != 3 {
+			t.Errorf("Expected 3, got %d", len(result))
+		}
+	})
+
+	t.Run("slices should panic", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic for slice elements")
+			}
+		}()
+
+		sliceOfSlices := NewSlice([][]int{{1, 2}, {3, 4}, {1, 2}})
+		sliceOfSlices.Uniq()
+	})
+
+	t.Run("funcs should panic", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic for function elements")
+			}
+		}()
+
+		sliceOfFuncs := NewSlice([]func(){func() {}, func() {}})
+		sliceOfFuncs.Uniq()
+	})
+
+	t.Run("maps should panic", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic for map elements")
+			}
+		}()
+
+		sliceOfMaps := NewSlice([]map[string]int{{"a": 1}, {"b": 2}, {"a": 1}})
+		sliceOfMaps.Uniq()
+	})
+}
+
 // ================== Base Functions ==================
 
 func TestEach(t *testing.T) {
@@ -294,9 +622,9 @@ func TestFilter(t *testing.T) {
 	}
 }
 
-func TestCount(t *testing.T) {
+func TestCountBy(t *testing.T) {
 	arr := []int{1, 2, 3, 4, 5}
-	result := Count(arr, func(x int, i int) bool {
+	result := CountBy(arr, func(x int, i int) bool {
 		return x%2 == 0
 	})
 	if result != 2 {
@@ -389,17 +717,6 @@ func TestConcat(t *testing.T) {
 	}
 }
 
-func TestConcatMap(t *testing.T) {
-	arr := []int{1, 2, 3}
-	result := ConcatMap(arr, func(x int) []int {
-		return []int{x, x * 2}
-	})
-
-	if len(result) != 6 {
-		t.Errorf("Expected 6, got %d", len(result))
-	}
-}
-
 func TestReverse(t *testing.T) {
 	arr := []int{1, 2, 3}
 	result := Reverse(arr)
@@ -415,11 +732,27 @@ func TestReverse(t *testing.T) {
 }
 
 func TestUniq(t *testing.T) {
-	arr := []int{1, 2, 3, 2, 1}
-	result := Uniq(arr)
-	if len(result) != 3 {
-		t.Errorf("Expected 3, got %d", len(result))
-	}
+	t.Run("basic types", func(t *testing.T) {
+		arr := []int{1, 2, 3, 2, 1}
+		result := Uniq(arr)
+		if len(result) != 3 {
+			t.Errorf("Expected 3, got %d", len(result))
+		}
+	})
+
+	t.Run("pointer types", func(t *testing.T) {
+		type Point struct {
+			X, Y int
+		}
+		p1 := &Point{1, 1}
+		p2 := &Point{2, 2}
+		p3 := &Point{1, 1}
+		arr := []*Point{p1, p2, p1, p3}
+		result := Uniq(arr)
+		if len(result) != 3 {
+			t.Errorf("Expected 3, got %d", len(result))
+		}
+	})
 }
 
 func TestUniqBy(t *testing.T) {

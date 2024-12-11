@@ -163,6 +163,7 @@ func (mc *MapCollection[K, V]) Reduce(f func(V, V, K) V, initial V) V {
 	for _, k := range keys {
 		initial = f(initial, mc.items[k], k)
 	}
+
 	return initial
 }
 
@@ -178,11 +179,19 @@ func (sc *SliceCollection[T]) FindLastIndex(f func(T) bool) int {
 	return FindLastIndex(sc.Items(), f)
 }
 
-func (sc *SliceCollection[T]) Count(f func(T, int) bool) int {
-	return Count(sc.Items(), f)
+func (sc *SliceCollection[T]) Count() int {
+	return len(sc.Items())
 }
 
-func (mc *MapCollection[K, V]) Count(f func(V, K) bool) int {
+func (mc *MapCollection[K, V]) Count() int {
+	return len(mc.Items())
+}
+
+func (sc *SliceCollection[T]) CountBy(f func(T, int) bool) int {
+	return CountBy(sc.Items(), f)
+}
+
+func (mc *MapCollection[K, V]) CountBy(f func(V, K) bool) int {
 	count := 0
 	for k, x := range mc.items {
 		if f(x, k) {
@@ -203,7 +212,55 @@ func (mc *MapCollection[K, V]) Some(f func(V, K) bool) bool {
 			return true
 		}
 	}
+
 	return false
+}
+
+func (sc *SliceCollection[T]) Every(f func(T, int) bool) bool {
+	return Every(sc.Items(), f)
+}
+
+func (mc *MapCollection[K, V]) Every(f func(V, K) bool) bool {
+	for k, x := range mc.items {
+		if !f(x, k) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (sc *SliceCollection[T]) None(f func(T, int) bool) bool {
+	return None(sc.Items(), f)
+}
+
+func (mc *MapCollection[K, V]) None(f func(V, K) bool) bool {
+	for k, x := range mc.items {
+		if f(x, k) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (sc *SliceCollection[T]) Concat(values []T) []T {
+	return Concat(sc.Items(), values)
+}
+
+func (sc *SliceCollection[T]) ConcatMap(f func(T) []T) *SliceCollection[T] {
+	sc.items = ConcatMap(sc.Items(), f)
+	return sc
+}
+
+func (sc *SliceCollection[T]) Reverse() *SliceCollection[T] {
+	sc.items = Reverse(sc.Items())
+	return sc
+}
+
+func (sc *SliceCollection[T]) Uniq() *SliceCollection[T] {
+	sc.items = uniqReflect(sc.Items())
+	return sc
 }
 
 // ================== Base Functions ==================
@@ -277,7 +334,7 @@ func FindLastIndex[T any](xs []T, f func(T) bool) int {
 	return -1
 }
 
-func Count[T any](xs []T, f func(T, int) bool) int {
+func CountBy[T any](xs []T, f func(T, int) bool) int {
 	count := 0
 	for i, x := range xs {
 		if f(x, i) {
@@ -335,6 +392,65 @@ func Reverse[T any](xs []T) []T {
 		zs[len(xs)-i-1] = x
 	}
 	return zs
+}
+
+func uniqReflect[T any](xs []T) []T {
+	if len(xs) <= 1 {
+		return xs
+	}
+
+	// Try to use built-in types first for better performance.
+	// For now we will consider only frequently used data types.
+	switch any(xs[0]).(type) {
+	case int:
+		m := make(map[int]struct{}, len(xs))
+		result := make([]T, 0, len(xs))
+		for _, x := range xs {
+			v := any(x).(int)
+			if _, exists := m[v]; !exists {
+				m[v] = struct{}{}
+				result = append(result, x)
+			}
+		}
+
+		return result
+
+	case string:
+		m := make(map[string]struct{}, len(xs))
+		result := make([]T, 0, len(xs))
+		for _, x := range xs {
+			v := any(x).(string)
+			if _, exists := m[v]; !exists {
+				m[v] = struct{}{}
+				result = append(result, x)
+			}
+		}
+		return result
+
+	case float64:
+		m := make(map[float64]struct{}, len(xs))
+		result := make([]T, 0, len(xs))
+		for _, x := range xs {
+			v := any(x).(float64)
+			if _, exists := m[v]; !exists {
+				m[v] = struct{}{}
+				result = append(result, x)
+			}
+		}
+		return result
+
+	default:
+		// Fallback to less efficient approach for other types
+		seen := make(map[any]struct{}, len(xs))
+		result := make([]T, 0, len(xs))
+		for _, x := range xs {
+			if _, exists := seen[any(x)]; !exists {
+				seen[any(x)] = struct{}{}
+				result = append(result, x)
+			}
+		}
+		return result
+	}
 }
 
 func Uniq[T comparable](xs []T) []T {
